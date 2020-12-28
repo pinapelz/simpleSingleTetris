@@ -26,9 +26,14 @@ public class Tetris extends JPanel {
 
     private static int startX = 5;
     private static int startY = 0;
+    private static String readySound = "22_ready.wav";
+    private static boolean startSound = true;
+    private static String goSound = "23_go.wav";
+    private static boolean gameStarted  = false;
     private static int clearedLines = 0;
     private static String levelUpSound = "19_levelup.wav";
     private static int level = 0;
+    private static boolean BGMSound = true;
     private static int levelDelay = 800;
     private static Clip musicClip;
     private static Thread defThread = null;
@@ -216,13 +221,13 @@ public class Tetris extends JPanel {
             well[pieceOrigin.x + p.x][pieceOrigin.y + p.y] = tetraminoColors[currentPiece];
         }
         clearRows();
-
-        newPiece();
-        try {
+              try {
             TimeUnit.MILLISECONDS.sleep(20);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
         }
+        newPiece();
+  
     }
 
     public void hardDrop() {
@@ -248,6 +253,35 @@ public class Tetris extends JPanel {
             for (int i = 1; i < 11; i++) {
                 well[i][j + 1] = well[i][j];
             }
+        }
+    }
+
+    public static void playGameOverSound() {
+        Random r = new Random();
+        switch (r.nextInt(3) + 1) {
+            case 1: {
+                try {
+                    playSound("25_lose01.wav", -5f);
+                } catch (Exception ex) {
+                    Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+            }
+            case 2:
+                try {
+                    playSound("25_lose02.wav", -5f);
+                } catch (Exception ex) {
+                    Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+            case 3:
+                try {
+                    playSound("25_lose03.wav", -5f);
+                } catch (Exception ex) {
+                    Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+
         }
     }
 
@@ -319,7 +353,7 @@ public class Tetris extends JPanel {
                 score += 800;
                 break;
         }
-        System.out.println("Lines" + clearedLines);
+
     }
 
     public static void clearBoard() {
@@ -342,8 +376,8 @@ public class Tetris extends JPanel {
 
     private static void checkLevel() {
         int prevLevel = level;
-        System.out.println(prevLevel);
-        if (clearedLines >= 10 && clearedLines < 15) {
+        System.out.println(level);
+        if (clearedLines >= 5 && clearedLines < 15) {
             level = 1;
             levelDelay = 750;
 
@@ -400,10 +434,12 @@ public class Tetris extends JPanel {
         g.setColor(Color.WHITE);
         Font font = new Font("Helvetica", Font.BOLD, 24);
         g.setFont(font);
-        g.drawString("Score: " + score, 330, 55);
+        g.drawString("Score: " + score, 330, 50);
         Font timerFont = new Font("Helvetica", Font.BOLD, 12);
         g.setFont(timerFont);
         g.drawString("Time Elapsed: " + convertToTime(timeElapsed), 330, 20);
+        g.drawString("Level: "+level, 330, 90);
+
         drawPiece(g);
 
         queuePiece(g);
@@ -449,8 +485,8 @@ public class Tetris extends JPanel {
 
     // open audioInputStream to the clip 
     public static void main(String[] args) {
-
         JFrame f = new JFrame("Tetris");
+        
         try {
             playBGM(-10f);
         } catch (Exception ex) {
@@ -480,7 +516,9 @@ public class Tetris extends JPanel {
                         break;
 
                     case KeyEvent.VK_DOWN:
+                        if(gameOver!=true&&gameStarted){
                         downPressing = true;
+                        }
                         break;
                     case KeyEvent.VK_LEFT:
 
@@ -489,8 +527,24 @@ public class Tetris extends JPanel {
                     case KeyEvent.VK_RIGHT:
                         rightPressing = true;
                         break;
+                    case KeyEvent.VK_M:
+                        if (BGMSound) {
+                            System.out.println("STOPPED BGM");
+                            stopBGM();
+                            BGMSound = false;
+                        } else if (!BGMSound) {
+                            try {
+                                System.out.println("START BGM");
+                                playBGM(-15f);
+                                BGMSound = true;
+                            } catch (Exception ex) {
+                                Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+
+                        break;
                     case KeyEvent.VK_SPACE:
-                        if (!gameOver) {
+                        if (!gameOver&&gameStarted) {
                             game.hardDrop();
                         }
                         break;
@@ -518,6 +572,17 @@ public class Tetris extends JPanel {
             @Override
             public void run() {
                 while (true) {
+                    if (startSound) {
+                        try {
+                            playSound(readySound, -5f);
+                            TimeUnit.MILLISECONDS.sleep(1500);
+                            playSound(goSound, -5f);
+                        } catch (Exception ex) {
+                            Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        startSound = false;
+                        gameStarted = true;
+                    }
                     while (gameOver != true) {
                         try {
                             TimeUnit.MILLISECONDS.sleep(levelDelay);
@@ -529,6 +594,10 @@ public class Tetris extends JPanel {
                     }
                     try {
                         playSound(gameOverSound, -6f);
+                        gameStarted = false;
+                        TimeUnit.MILLISECONDS.sleep(750);
+                        playGameOverSound();
+                       
                     } catch (Exception ex) {
                         Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -542,6 +611,11 @@ public class Tetris extends JPanel {
                         case 1:
                             clearBoard();
                             gameOver = false;
+                            startSound = true;
+                            level = 0;
+                            clearedLines = 0;
+                            levelDelay = 800;
+                            
                             score = 0;
                             stopBGM();
                              {
@@ -551,6 +625,7 @@ public class Tetris extends JPanel {
                                     Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
+                             gameStarted = true;
                             break;
 
                         case 2:
@@ -601,12 +676,11 @@ public class Tetris extends JPanel {
             public void run() {
 
                 while (true) {
-
+                    System.out.println("UPDATING TIME");
                     try {
-                        while (!gameOver) {
-                            TimeUnit.MILLISECONDS.sleep(1000);
-                            timeElapsed++;
-                        }
+
+                        TimeUnit.MILLISECONDS.sleep(1000);
+                        timeElapsed++;
 
                     } catch (InterruptedException e) {
                     }
@@ -617,7 +691,6 @@ public class Tetris extends JPanel {
             public void run() {
 
                 while (true) {
-
                     try {
                         while (!gameOver) {
                             checkLevel();
@@ -642,5 +715,4 @@ public class Tetris extends JPanel {
         }
         return minutesDisplay + ":" + secondsDisplay;
     }
-
 }
