@@ -7,3 +7,4 @@ This is a vastly improved version of a single file Tetris code written by [DataW
 - Added gameover state
 - Improved score UI 
 
+Project is set up to be open with Netbeans IDE but honestly its one file man just copy and paste it into your own IDE
