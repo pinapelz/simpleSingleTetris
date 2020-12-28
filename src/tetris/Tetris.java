@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,11 +26,19 @@ public class Tetris extends JPanel {
 
     private static int startX = 5;
     private static int startY = 0;
+    private static int clearedLines = 0;
+    private static String levelUpSound = "19_levelup.wav";
+    private static int level = 0;
+    private static int levelDelay = 800;
+    private static Clip musicClip;
     private static Thread defThread = null;
     private static Thread softDropThread = null;
     private static String[] gameOverButtons = {"Yes", "Play Again", "Quit"};
     private static boolean gameOver = false;
     private static int timeElapsed = 0;
+    private static String bgmOne = "bgm_01.wav";
+    private static String bgmTwo = "bgm_02.wav";
+    private static String bgmThree = "bgm_03.wav";
     private static String oneVoiceSound = "01_single.wav";
     private static String twoVoiceSound = "02_double.wav";
     private static String threeVoiceSound = "03_triple.wav";
@@ -41,6 +50,7 @@ public class Tetris extends JPanel {
     private static String softDropSound = "sfx_softdrop.wav";
     private static String rotateSound = "sfx_rotate.wav";
     private static String gameOverSound = "sfx_gameover.wav";
+    private static boolean levelledUp = false;
     private static String hardDropSound = "sfx_harddrop.wav";
     private static boolean isHardDrop = false;
     private static boolean leftPressing = false;
@@ -137,7 +147,8 @@ public class Tetris extends JPanel {
 
         rotation = 0;
         if (nextPieces.isEmpty()) {
-            Collections.addAll(nextPieces, 0, 1, 2, 3, 4, 5, 6);
+            Random r = new Random();
+            Collections.addAll(nextPieces, r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7));
             //Collections.addAll(nextPieces, 0, 0, 0, 0, 0, 0, 0);
             Collections.shuffle(nextPieces);
         }
@@ -185,7 +196,7 @@ public class Tetris extends JPanel {
         if (!collidesAt(pieceOrigin.x, pieceOrigin.y + 1, rotation)) {
             pieceOrigin.y += 1;
         } else {
-            System.out.println(pieceOrigin.x + "," + pieceOrigin.y);
+
             fixToWell();
         }
         repaint();
@@ -223,7 +234,7 @@ public class Tetris extends JPanel {
                 pieceOrigin.y += 1;
                 fallen++;
             } else {
-                System.out.println(pieceOrigin.x + "," + pieceOrigin.y);
+
                 fixToWell();
                 touchedBottom = true;
             }
@@ -263,11 +274,12 @@ public class Tetris extends JPanel {
         switch (numClears) {
             case 1:
                 score += 100;
+                clearedLines++;
                  {
                     try {
-                        playSound(oneVoiceSound,-1.0f);
+                        playSound(oneVoiceSound, -1.0f);
                         playSound(oneLineSound, -2.0f);
-                        
+
                     } catch (Exception ex) {
                         Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -275,8 +287,9 @@ public class Tetris extends JPanel {
                 break;
 
             case 2: {
+                clearedLines += 2;
                 try {
-                     playSound(twoVoiceSound,-1.0f);
+                    playSound(twoVoiceSound, -1.0f);
                     playSound(twoLineSound, -2.0f);
                 } catch (Exception ex) {
                     Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
@@ -286,8 +299,9 @@ public class Tetris extends JPanel {
             break;
 
             case 3:
+                clearedLines += 3;
                 try {
-                    playSound(threeVoiceSound,-1.0f);
+                    playSound(threeVoiceSound, -1.0f);
                     playSound(threeLineSound, -2.0f);
                 } catch (Exception ex) {
                     Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
@@ -295,8 +309,9 @@ public class Tetris extends JPanel {
                 score += 500;
                 break;
             case 4:
+                clearedLines += 4;
                 try {
-                     playSound(tetrisVoiceSound,-1.0f);
+                    playSound(tetrisVoiceSound, -1.0f);
                     playSound(tetrisSound, -2.0f);
                 } catch (Exception ex) {
                     Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
@@ -304,6 +319,7 @@ public class Tetris extends JPanel {
                 score += 800;
                 break;
         }
+        System.out.println("Lines" + clearedLines);
     }
 
     public static void clearBoard() {
@@ -324,6 +340,51 @@ public class Tetris extends JPanel {
 
     }
 
+    private static void checkLevel() {
+        int prevLevel = level;
+        System.out.println(prevLevel);
+        if (clearedLines >= 10 && clearedLines < 15) {
+            level = 1;
+            levelDelay = 750;
+
+        } else if (clearedLines >= 0 && clearedLines < 10) {
+            level = 0;
+            levelDelay = 800;
+        } else if (clearedLines >= 15 && clearedLines < 20) {
+            level = 2;
+            levelDelay = 650;
+        } else if (clearedLines >= 20 && clearedLines < 30) {
+            level = 3;
+            levelDelay = 500;
+        } else if (clearedLines >= 30 && clearedLines < 40) {
+            level = 4;
+            levelDelay = 300;
+        } else if (clearedLines >= 40 && clearedLines < 45) {
+            level = 5;
+            levelDelay = 200;
+        } else if (clearedLines >= 45 && clearedLines < 55) {
+            level = 6;
+            levelDelay = 120;
+        } else if (clearedLines >= 55 && clearedLines < 60) {
+            level = 7;
+            levelDelay = 80;
+        } else if (clearedLines >= 60 && clearedLines < 65) {
+            level = 8;
+            levelDelay = 60;
+        } else {
+            level = 9;
+            levelDelay = 45;
+        }
+        if (prevLevel != level) {
+            System.out.println("PLAY SOUND");
+            try {
+                playSound(levelUpSound, -2f);
+            } catch (Exception ex) {
+                Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         g.fillRect(0, 0, 26 * 12, 26 * 23);
@@ -342,9 +403,9 @@ public class Tetris extends JPanel {
         g.drawString("Score: " + score, 330, 55);
         Font timerFont = new Font("Helvetica", Font.BOLD, 12);
         g.setFont(timerFont);
-        g.drawString("Time Elapsed: " + timeElapsed,330,20);
+        g.drawString("Time Elapsed: " + convertToTime(timeElapsed), 330, 20);
         drawPiece(g);
-        
+
         queuePiece(g);
     }
 
@@ -358,9 +419,43 @@ public class Tetris extends JPanel {
 
     }
 
+    private static void playBGM(float gain) throws Exception {
+
+        String soundFile = "";
+        Random r = new Random();
+        switch (r.nextInt(3) + 1) {
+            case 1:
+                soundFile = bgmOne;
+                break;
+            case 2:
+                soundFile = bgmTwo;
+                break;
+            case 3:
+                soundFile = bgmThree;
+                break;
+
+        }
+        musicClip = AudioSystem.getClip();
+        AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File("sounds\\" + soundFile).getAbsoluteFile());
+        musicClip.open(audioInput);
+        FloatControl gainControl = (FloatControl) musicClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(gain);
+        musicClip.loop(999);
+    }
+
+    private static void stopBGM() {
+        musicClip.stop();
+    }
+
     // open audioInputStream to the clip 
     public static void main(String[] args) {
+
         JFrame f = new JFrame("Tetris");
+        try {
+            playBGM(-10f);
+        } catch (Exception ex) {
+            Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+        }
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(322 + 200, 26 * 23 + 25);
         f.setVisible(true);
@@ -369,6 +464,7 @@ public class Tetris extends JPanel {
         f.addKeyListener(new KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
+
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
@@ -424,20 +520,21 @@ public class Tetris extends JPanel {
                 while (true) {
                     while (gameOver != true) {
                         try {
-                            TimeUnit.MILLISECONDS.sleep(800);
+                            TimeUnit.MILLISECONDS.sleep(levelDelay);
+
                             game.dropDown();
 
                         } catch (InterruptedException e) {
                         }
                     }
                     try {
-                        playSound(gameOverSound, -5f);
+                        playSound(gameOverSound, -6f);
                     } catch (Exception ex) {
                         Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     int response = JOptionPane.showOptionDialog(null, "GAME OVER\n" + "Final Score: " + score, "GAME OVER",
                             JOptionPane.WARNING_MESSAGE, 0, null, gameOverButtons, gameOverButtons[1]);
-                    System.out.println(response);
+
                     switch (response) {
                         case 0:
                             //Future online leaderboard code goes here
@@ -446,6 +543,14 @@ public class Tetris extends JPanel {
                             clearBoard();
                             gameOver = false;
                             score = 0;
+                            stopBGM();
+                             {
+                                try {
+                                    playBGM(-10.0f);
+                                } catch (Exception ex) {
+                                    Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
                             break;
 
                         case 2:
@@ -492,21 +597,50 @@ public class Tetris extends JPanel {
                 }
             }
         };
-        softDropThread.start();
-    }
-    Thread gameTimer = new Thread(){
+        Thread gameTimer = new Thread() {
             public void run() {
+
                 while (true) {
+
                     try {
-                        while(!gameOver){
-                        TimeUnit.MILLISECONDS.sleep(1000);
-                        timeElapsed++;
+                        while (!gameOver) {
+                            TimeUnit.MILLISECONDS.sleep(1000);
+                            timeElapsed++;
                         }
-                        
+
                     } catch (InterruptedException e) {
                     }
                 }
-            }        
-    };
+            }
+        };
+        Thread levelChecker = new Thread() {
+            public void run() {
+
+                while (true) {
+
+                    try {
+                        while (!gameOver) {
+                            checkLevel();
+                            TimeUnit.MILLISECONDS.sleep(1500);
+                        }
+
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        };
+        softDropThread.start();
+        levelChecker.start();
+        gameTimer.start();
+    }
+
+    public static String convertToTime(int seconds) {
+        int minutesDisplay = seconds / 60;
+        int secondsDisplay = seconds % 60;
+        if (secondsDisplay < 10) {
+            return minutesDisplay + ":0" + secondsDisplay;
+        }
+        return minutesDisplay + ":" + secondsDisplay;
+    }
 
 }
