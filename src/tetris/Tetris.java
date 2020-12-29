@@ -33,6 +33,7 @@ public class Tetris extends JPanel {
     private static int clearedLines = 0;
     private static String levelUpSound = "19_levelup.wav";
     private static int level = 0;
+    private static int nextPiece = 0;
     private static boolean BGMSound = true;
     private static int levelDelay = 800;
     private static Clip musicClip;
@@ -149,14 +150,12 @@ public class Tetris extends JPanel {
 
     public static void newPiece() {
         pieceOrigin = new Point(startX, startY);
-
         rotation = 0;
-        if (nextPieces.isEmpty()) {
+        if (nextPieces.isEmpty()||nextPieces.size()==1) {
             Random r = new Random();
             Collections.addAll(nextPieces, r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7), r.nextInt(7));
-            //Collections.addAll(nextPieces, 0, 0, 0, 0, 0, 0, 0);
-            Collections.shuffle(nextPieces);
         }
+        
         currentPiece = nextPieces.get(0);
         nextPieces.remove(0);
     }
@@ -214,7 +213,7 @@ public class Tetris extends JPanel {
             Logger.getLogger(Tetris.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (pieceOrigin.x <= startX && pieceOrigin.y <= startY) {
-            System.out.println("Game Over");
+
             gameOver = true;
         }
         for (Point p : Tetraminos[currentPiece][rotation]) {
@@ -376,7 +375,6 @@ public class Tetris extends JPanel {
 
     private static void checkLevel() {
         int prevLevel = level;
-        System.out.println(level);
         if (clearedLines >= 5 && clearedLines < 15) {
             level = 1;
             levelDelay = 750;
@@ -430,7 +428,7 @@ public class Tetris extends JPanel {
                 g.fillRect(322, 0, 322 + 200, 623);
             }
         }
-
+        
         g.setColor(Color.WHITE);
         Font font = new Font("Helvetica", Font.BOLD, 24);
         g.setFont(font);
